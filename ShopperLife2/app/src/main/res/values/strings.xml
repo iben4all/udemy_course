@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">ShopperLife2</string>
+
+    <string name="back4app_app_id">3ffe4745175102aa63c9dd1196e6c4969b473157</string>
+    <string name="back4app_client_key">P1b222f139865e1e0a33d1ac8e2daf007ad8055b1</string>
+
+    <string name="app_name">app</string>
+
+    <string name="hello_world">Hello World!</string>
+    <string name="action_settings">Settings</string>
+
+
+</resources>

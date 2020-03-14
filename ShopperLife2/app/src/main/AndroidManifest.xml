@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.shopperlife2">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="app"
+
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+
+        <meta-data
+            android:name="com.parse.SERVER_URL"
+            android:value="http://18.191.9.5:80/parse/" />
+        <meta-data
+            android:name="com.parse.APPLICATION_ID"
+            android:value="3ffe4745175102aa63c9dd1196e6c4969b473157" />
+        <meta-data
+            android:name="com.parse.CLIENT_KEY"
+            android:value="1b222f139865e1e0a33d1ac8e2daf007ad8055b1" />
+
+
+
+        <activity
+            android:name=".MainActivity">
+            android:label="app"
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

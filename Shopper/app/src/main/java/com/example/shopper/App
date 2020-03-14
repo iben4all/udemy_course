@@ -1,0 +1,42 @@
+package com.example.shopper;
+
+import com.parse.Parse;
+import com.parse.ParseException;
+import com.parse.ParseObject;
+import com.parse.SaveCallback;
+
+import android.app.Application;
+import android.util.Log;
+
+
+public class App extends Application {
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        Parse.initialize(new Parse.Configuration.Builder(this)
+                .applicationId("3ffe4745175102aa63c9dd1196e6c4969b473157")
+                // if defined
+                .clientKey("P1b222f139865e1e0a33d1ac8e2daf007ad8055b1")
+                .server("http://18.191.9.5:80/parse/")
+                .build()
+        );
+
+
+        ParseObject object = new ParseObject("ExampleObject");
+        object.put("myNumber", "46");
+        object.put("myString", "rob");
+
+        object.saveInBackground(new SaveCallback() {
+            @Override
+            public void done(ParseException ex) {
+                if (ex == null) {
+                    Log.i("Parse Result", "Successful!");
+                } else {
+                    Log.i("Parse Result", "Failed" + ex.toString());
+                }
+            }
+        });
+
+
+    }
+}
