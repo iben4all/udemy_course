@@ -1,8 +1,21 @@
+import 'dart:io';
+import 'package:expense_planner/widgets/chart.dart';
+import 'package:expense_planner/widgets/new_transaction.dart';
 import 'package:flutter/material.dart';
-import 'models/transaction.dart';
-import 'package:intl/intl.dart';
+//import 'package:flutter/services.dart';
 
-void main() => runApp(MyApp());
+
+import './models/transaction.dart';
+import './widgets/transaction_list.dart';
+import './widgets/chart.dart';
+
+void main() {
+//  SystemChrome.setPreferredOrientations([
+//    DeviceOrientation.portraitUp,
+//    DeviceOrientation.portraitDown,
+//  ]);
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -11,145 +24,152 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Expense_Planner',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-      ),
+          primarySwatch: Colors.purple,
+          accentColor: Colors.amber,
+          fontFamily: 'Quicksand',
+          accentTextTheme: ThemeData.light().textTheme.copyWith(
+                  title: TextStyle(
+                fontFamily: 'OpenSans',
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              )),
+          textTheme: ThemeData.light().textTheme.copyWith(
+                title: TextStyle(
+                  fontFamily: 'OpenSans',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                button: TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'OpenSans',
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+          appBarTheme: AppBarTheme(
+            textTheme: ThemeData.light().textTheme.copyWith(
+                  title: TextStyle(
+                    fontFamily: 'OpenSans',
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+          )),
       home: MyHomePage(title: 'Expense Planner'),
     );
   }
 }
 
-class MyHomePage extends StatelessWidget {
+class MyHomePage extends StatefulWidget {
   final String title;
-  final titleInput = TextEditingController();
-  final amountInput = TextEditingController();
-
-  final List<Transaction> transaction = [
-    Transaction(
-      id: 't1',
-      title: 'New Shoes',
-      amount: 69.99,
-      date: DateTime.now(),
-    ),
-    Transaction(
-      id: 't2',
-      title: 'Weekly groceries',
-      amount: 16.53,
-      date: DateTime.now(),
-    ),
-  ];
 
   MyHomePage({@required this.title});
 
   @override
+  _MyHomePageState createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  final List<Transaction> _userTransaction = [];
+
+  List<Transaction> get _recentTransactions {
+    return _userTransaction.where((tx) {
+      return tx.date.isAfter(DateTime.now().subtract(Duration(days: 7)));
+    }).toList();
+  }
+
+  void _addNewTx({String txTitle, double txAmount, DateTime txDate}) {
+    final txTransaction = Transaction(
+      title: txTitle,
+      amount: txAmount,
+      date: txDate,
+      id: DateTime.now().toString(),
+    );
+    setState(() {
+      _userTransaction.add(txTransaction);
+    });
+  }
+
+  void _startAddNewTransaction(BuildContext ctx) {
+    showModalBottomSheet(
+      context: ctx,
+      builder: (bCtx) {
+        return NewTransaction(addTx: _addNewTx);
+      },
+    );
+  }
+
+  void _deleteTransaction(String deleteId) {
+    setState(() {
+      _userTransaction.removeWhere((tx) {
+        return tx.id == deleteId;
+      });
+    });
+  }
+
+  bool _showChart = false;
+
+  @override
   Widget build(BuildContext context) {
+    final _isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
 
+    final appBar = AppBar(
+      title: Text(widget.title),
+      actions: <Widget>[
+        IconButton(
+          icon: Icon(Icons.add),
+          onPressed: () => _startAddNewTransaction(context),
+        )
+      ],
+    );
 
+    final mediaQuery = MediaQuery.of(context);
+
+    var appHeight = mediaQuery.size.height -
+        appBar.preferredSize.height -
+        mediaQuery.padding.top;
+
+    final txListWidget = Container(
+        height: appHeight * 0.7,
+        child: TransactionList(_userTransaction, _deleteTransaction));
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-      ),
+      appBar: appBar,
       body: Column(
         mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-          Center(
-            child: Card(
-              color: Colors.blue,
-              child: Container(
-                width: double.infinity,
-                child: Text('Chart'),
-              ),
-              elevation: 20,
-            ),
-          ),
-          Card(
-            elevation: 5,
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                vertical: 5,
-                horizontal: 10,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: <Widget>[
-                  TextField(
-                    decoration: InputDecoration(labelText: 'Title'),
-                    controller: titleInput,
-                  ),
-                  TextField(
-                    decoration: InputDecoration(labelText: 'Amount'),
-                    controller: amountInput,
 
-                  ),
-                  FlatButton(
-                    onPressed: () {
-                      print(titleInput.text);
-                      print(amountInput.text);
-                    },
-                    child: Text(
-                      'Add Transaction',
-                    ),
-                    textColor: Colors.purple,
-                  ),
-                ],
-              ),
-            ),
+          if (!_isLandscape) Container(
+          height: appHeight * 0.3, child: Chart(_recentTransactions)),
+          if (!_isLandscape) txListWidget,
+            if (_isLandscape) Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Show Chart'),
+              Switch.adaptive(
+                activeColor: Theme.of(context).accentColor,
+                  value: _showChart,
+                  onChanged: (val) {
+                    setState(() {
+                      _showChart = val;
+                    });
+                  }),
+            ],
           ),
-          Column(
-            children: transaction.map((tx) {
-              return Card(
-                child: Row(
-                  children: <Widget>[
-                    Container(
-                      margin: EdgeInsets.symmetric(
-                        horizontal: 15,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Colors.purple,
-                          width: 2,
-                        ),
-                      ),
-                      padding: const EdgeInsets.all(10),
-                      child: Text(
-                        '\$${tx.amount}',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                            color: Colors.purple),
-                      ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          tx.title,
-                          style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black),
-                        ),
-                        Text(DateFormat.yMMMd().format(tx.date)),
-                      ],
-                    )
-                  ],
-                ),
-                elevation: 10,
-              );
-            }).toList(),
-          ),
+          if (_isLandscape) _showChart
+              ? Container(
+                  height: appHeight * 0.6, child: Chart(_recentTransactions))
+              : txListWidget,
         ],
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: Platform.isIOS
+          ? Container()
+          : FloatingActionButton(
+        child: Icon(Icons.add),
+        onPressed: () => _startAddNewTransaction(context),
+        elevation: 5,
       ),
     );
   }
