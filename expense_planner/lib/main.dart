@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:expense_planner/widgets/chart.dart';
 import 'package:expense_planner/widgets/new_transaction.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 //import 'package:flutter/services.dart';
-
 
 import './models/transaction.dart';
 import './widgets/transaction_list.dart';
@@ -27,32 +27,41 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.purple,
           accentColor: Colors.amber,
           fontFamily: 'Quicksand',
-          accentTextTheme: ThemeData.light().textTheme.copyWith(
-                  title: TextStyle(
+          accentTextTheme: ThemeData
+              .light()
+              .textTheme
+              .copyWith(
+              title: TextStyle(
                 fontFamily: 'OpenSans',
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
               )),
-          textTheme: ThemeData.light().textTheme.copyWith(
-                title: TextStyle(
-                  fontFamily: 'OpenSans',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-                button: TextStyle(
-                  color: Colors.white,
-                  fontFamily: 'OpenSans',
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+          textTheme: ThemeData
+              .light()
+              .textTheme
+              .copyWith(
+            title: TextStyle(
+              fontFamily: 'OpenSans',
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+            button: TextStyle(
+              color: Colors.white,
+              fontFamily: 'OpenSans',
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           appBarTheme: AppBarTheme(
-            textTheme: ThemeData.light().textTheme.copyWith(
-                  title: TextStyle(
-                    fontFamily: 'OpenSans',
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+            textTheme: ThemeData
+                .light()
+                .textTheme
+                .copyWith(
+              title: TextStyle(
+                fontFamily: 'OpenSans',
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           )),
       home: MyHomePage(title: 'Expense Planner'),
     );
@@ -110,10 +119,24 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final _isLandscape =
-        MediaQuery.of(context).orientation == Orientation.landscape;
+    final mediaQuery = MediaQuery.of(context);
 
-    final appBar = AppBar(
+    final _isLandscape = mediaQuery.orientation == Orientation.landscape;
+
+    final PreferredSizeWidget appBar = Platform.isIOS
+        ? CupertinoNavigationBar(
+      middle: Text(widget.title),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          GestureDetector(
+            child: Icon(CupertinoIcons.add),
+            onTap: () => _startAddNewTransaction(context),
+          ),
+        ],
+      ),
+    )
+        : AppBar(
       title: Text(widget.title),
       actions: <Widget>[
         IconButton(
@@ -123,8 +146,6 @@ class _MyHomePageState extends State<MyHomePage> {
       ],
     );
 
-    final mediaQuery = MediaQuery.of(context);
-
     var appHeight = mediaQuery.size.height -
         appBar.preferredSize.height -
         mediaQuery.padding.top;
@@ -133,22 +154,22 @@ class _MyHomePageState extends State<MyHomePage> {
         height: appHeight * 0.7,
         child: TransactionList(_userTransaction, _deleteTransaction));
 
-    return Scaffold(
-      appBar: appBar,
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-
-          if (!_isLandscape) Container(
-          height: appHeight * 0.3, child: Chart(_recentTransactions)),
-          if (!_isLandscape) txListWidget,
-            if (_isLandscape) Row(
+    final bodyWidget = SafeArea(child: Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: <Widget>[
+        if (!_isLandscape)
+          Container(height: appHeight * 0.3, child: Chart(_recentTransactions)),
+        if (!_isLandscape) txListWidget,
+        if (_isLandscape)
+          Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('Show Chart'),
+              Text('Show Chart',style: Theme.of(context).textTheme.title,),
               Switch.adaptive(
-                activeColor: Theme.of(context).accentColor,
+                  activeColor: Theme
+                      .of(context)
+                      .accentColor,
                   value: _showChart,
                   onChanged: (val) {
                     setState(() {
@@ -157,13 +178,25 @@ class _MyHomePageState extends State<MyHomePage> {
                   }),
             ],
           ),
-          if (_isLandscape) _showChart
+        if (_isLandscape)
+          _showChart
               ? Container(
-                  height: appHeight * 0.6, child: Chart(_recentTransactions))
+              height: appHeight * 0.6, child: Chart(_recentTransactions))
               : txListWidget,
-        ],
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      ],
+    ),
+    );
+
+    return Platform.isIOS
+        ? CupertinoPageScaffold(
+      navigationBar: appBar,
+      child: bodyWidget,
+    )
+        : Scaffold(
+      appBar: appBar,
+      body: bodyWidget,
+      floatingActionButtonLocation:
+      FloatingActionButtonLocation.centerFloat,
       floatingActionButton: Platform.isIOS
           ? Container()
           : FloatingActionButton(
