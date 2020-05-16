@@ -27,41 +27,32 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.purple,
           accentColor: Colors.amber,
           fontFamily: 'Quicksand',
-          accentTextTheme: ThemeData
-              .light()
-              .textTheme
-              .copyWith(
-              title: TextStyle(
+          accentTextTheme: ThemeData.light().textTheme.copyWith(
+                  title: TextStyle(
                 fontFamily: 'OpenSans',
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
               )),
-          textTheme: ThemeData
-              .light()
-              .textTheme
-              .copyWith(
-            title: TextStyle(
-              fontFamily: 'OpenSans',
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-            button: TextStyle(
-              color: Colors.white,
-              fontFamily: 'OpenSans',
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          appBarTheme: AppBarTheme(
-            textTheme: ThemeData
-                .light()
-                .textTheme
-                .copyWith(
-              title: TextStyle(
-                fontFamily: 'OpenSans',
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+          textTheme: ThemeData.light().textTheme.copyWith(
+                title: TextStyle(
+                  fontFamily: 'OpenSans',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                button: TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'OpenSans',
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
+          appBarTheme: AppBarTheme(
+            textTheme: ThemeData.light().textTheme.copyWith(
+                  title: TextStyle(
+                    fontFamily: 'OpenSans',
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
           )),
       home: MyHomePage(title: 'Expense Planner'),
     );
@@ -123,28 +114,33 @@ class _MyHomePageState extends State<MyHomePage> {
 
     final _isLandscape = mediaQuery.orientation == Orientation.landscape;
 
-    final PreferredSizeWidget appBar = Platform.isIOS
-        ? CupertinoNavigationBar(
-      middle: Text(widget.title),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          GestureDetector(
-            child: Icon(CupertinoIcons.add),
-            onTap: () => _startAddNewTransaction(context),
-          ),
+
+    Widget _buildAppBar(){
+      return Platform.isIOS ? CupertinoNavigationBar(
+        middle: Text(widget.title),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            GestureDetector(
+              child: Icon(CupertinoIcons.add),
+              onTap: () => _startAddNewTransaction(context),
+            ),
+          ],
+        ),
+      ) : AppBar(
+        title: Text(widget.title),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.add),
+            onPressed: () => _startAddNewTransaction(context),
+          )
         ],
-      ),
-    )
-        : AppBar(
-      title: Text(widget.title),
-      actions: <Widget>[
-        IconButton(
-          icon: Icon(Icons.add),
-          onPressed: () => _startAddNewTransaction(context),
-        )
-      ],
-    );
+      );
+    }
+
+
+
+    final PreferredSizeWidget appBar = _buildAppBar();
 
     var appHeight = mediaQuery.size.height -
         appBar.preferredSize.height -
@@ -154,56 +150,70 @@ class _MyHomePageState extends State<MyHomePage> {
         height: appHeight * 0.7,
         child: TransactionList(_userTransaction, _deleteTransaction));
 
-    final bodyWidget = SafeArea(child: Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: <Widget>[
-        if (!_isLandscape)
-          Container(height: appHeight * 0.3, child: Chart(_recentTransactions)),
-        if (!_isLandscape) txListWidget,
-        if (_isLandscape)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('Show Chart',style: Theme.of(context).textTheme.title,),
-              Switch.adaptive(
-                  activeColor: Theme
-                      .of(context)
-                      .accentColor,
-                  value: _showChart,
-                  onChanged: (val) {
-                    setState(() {
-                      _showChart = val;
-                    });
-                  }),
-            ],
-          ),
-        if (_isLandscape)
-          _showChart
-              ? Container(
-              height: appHeight * 0.6, child: Chart(_recentTransactions))
-              : txListWidget,
-      ],
-    ),
+    List<Widget> _buildLandscapeContent() {
+      return [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Show Chart',
+              style: Theme.of(context).textTheme.title,
+            ),
+            Switch.adaptive(
+                activeColor: Theme.of(context).accentColor,
+                value: _showChart,
+                onChanged: (val) {
+                  setState(() {
+                    _showChart = val;
+                  });
+                }),
+          ],
+        ),
+        _showChart
+            ? Container(
+                height: appHeight * 0.6, child: Chart(_recentTransactions))
+            : txListWidget
+      ];
+    }
+
+    List<Widget> _buildProtraitContent() {
+      return [
+        Container(
+          height: appHeight * 0.3,
+          child: Chart(_recentTransactions),
+        ),
+        txListWidget
+      ];
+    }
+
+    final bodyWidget = SafeArea(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+          if (!_isLandscape) ..._buildProtraitContent(),
+          if (_isLandscape) ..._buildLandscapeContent(),
+        ],
+      ),
     );
 
     return Platform.isIOS
         ? CupertinoPageScaffold(
-      navigationBar: appBar,
-      child: bodyWidget,
-    )
+            navigationBar: appBar,
+            child: bodyWidget,
+          )
         : Scaffold(
-      appBar: appBar,
-      body: bodyWidget,
-      floatingActionButtonLocation:
-      FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: Platform.isIOS
-          ? Container()
-          : FloatingActionButton(
-        child: Icon(Icons.add),
-        onPressed: () => _startAddNewTransaction(context),
-        elevation: 5,
-      ),
-    );
+            appBar: appBar,
+            body: bodyWidget,
+            floatingActionButtonLocation:
+                FloatingActionButtonLocation.centerFloat,
+            floatingActionButton: Platform.isIOS
+                ? Container()
+                : FloatingActionButton(
+                    child: Icon(Icons.add),
+                    onPressed: () => _startAddNewTransaction(context),
+                    elevation: 5,
+                  ),
+          );
   }
 }
